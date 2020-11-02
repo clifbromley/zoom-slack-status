@@ -38,5 +38,6 @@ if [ $? -ne 0 ]; then
     echo Failure generating $OUTPUT
     exit 1
 fi
+gofmt -s -w $OUTPUT
 rm menu_icon.png
 echo Finished
