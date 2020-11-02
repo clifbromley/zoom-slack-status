@@ -126,7 +126,6 @@ func checkForMeeting() bool {
 
 	apps := deleteEmpty(strings.Split(result, ","))
 	return hasZoomMeetingWindow(apps)
-
 }
 
 func hasZoomMeetingWindow(apps []string) bool {
