@@ -4,7 +4,7 @@ Sets status of slack workspaces based on whether or not a zoom call is open.
 ## Configuration & Installation
 
 1. First, get a user token from slack [here](https://api.slack.com/custom-integrations/legacy-tokens)
-1. Create a configuration file like the following and store in `~/slack-status-config.json`
+1. Create a configuration file like the following and store in `~/.slack-status-config.json`
     ```json
     [
       {
@@ -25,6 +25,6 @@ Sets status of slack workspaces based on whether or not a zoom call is open.
       }
     ]
     ```
-1. Copy the zoom-status.app file to your Applications directory
+1. Copy the zoom-slack-status.app file to your Applications directory
 1. Run the app
 1. You should be prompted to allow the app accessibility features. If not, open System Preferences->Security & Privacy -> Privacy and add the app to the "Accessibility" section
