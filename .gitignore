@@ -3,3 +3,4 @@ icons/icon.icns
 icons/out.iconset
 dist/
 .slack-status-config.json
+.DS_Store
