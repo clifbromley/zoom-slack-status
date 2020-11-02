@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andybrewer/mack"
 	icon "github.com/caitlinelfring/zoom-slack-status/icons"
 	"github.com/getlantern/systray"
 	homedir "github.com/mitchellh/go-homedir"
+	ps "github.com/mitchellh/go-ps"
 )
 
 type status struct {
@@ -34,15 +34,13 @@ type slackProfile struct {
 }
 
 var (
-	activeMeetingWindowName = "Zoom Meeting"
-
 	slackAccounts []slackAccount
 
 	inMeeting  = false
 	menuStatus *systray.MenuItem
 
 	defaultMeetingStatus = status{
-		StatusText:  "In A Meeting",
+		StatusText:  "In a meeting",
 		StatusEmoji: ":zoom:",
 	}
 
@@ -119,22 +117,19 @@ func loadConfig() {
 
 func checkForMeeting() bool {
 	fmt.Println("Checking for active meetings...")
-	result, err := mack.Tell("System Events", "get the title of every window of every process")
+
+	processes, err := ps.Processes()
 	if err != nil {
-		panic(err)
+		fmt.Printf("Could not get running process list: %s\n", err)
+		return false
 	}
-
-	apps := deleteEmpty(strings.Split(result, ","))
-	return hasZoomMeetingWindow(apps)
-}
-
-func hasZoomMeetingWindow(apps []string) bool {
-	for _, app := range apps {
-		if strings.Contains(app, activeMeetingWindowName) {
+	for _, proc := range processes {
+		// NOTE: This is the process that is running when a zoom meeting is
+		// in progress on Mac. It might not be the same for other systems
+		if strings.ToLower(proc.Executable()) == "cpthost" {
 			return true
 		}
 	}
-
 	return false
 }
 

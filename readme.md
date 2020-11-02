@@ -31,4 +31,3 @@ Sets status of slack workspaces based on whether or not a zoom call is open.
 3. Build the app with `./build-app.sh`
 4. Copy the `zoom-slack-status.app` within `dist` folder to your `Applications` directory
 5. Run the app
-6. You should be prompted to allow the app accessibility features. If not, open System Preferences->Security & Privacy -> Privacy and add the app to the "Accessibility" section
