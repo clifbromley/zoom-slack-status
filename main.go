@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/andybrewer/mack"
-	icon "github.com/cmmarslender/zoom-status/icons"
+	icon "github.com/caitlinelfring/zoom-slack-status/icons"
 	"github.com/getlantern/systray"
 )
 

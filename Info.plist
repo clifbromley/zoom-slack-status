@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key>
-	<string>zoom-status</string>
+	<string>zoom-slack-status</string>
 
 	<key>CFBundleIconFile</key>
 	<string>icon.icns</string>
 
 	<key>CFBundleIdentifier</key>
-	<string>io.cmm.apps.zoom-status</string>
+	<string>io.caitlinelfring.apps.zoom-status</string>
 
 	<key>NSHighResolutionCapable</key>
 	<true/>

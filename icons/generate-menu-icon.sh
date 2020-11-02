@@ -1,16 +1,17 @@
-#/bin/sh
+#!/bin/sh
 
+export GO111MODULE=off
 if [ -z "$GOPATH" ]; then
     echo GOPATH environment variable not set
-    exit
+    exit 1
 fi
 
 if [ ! -e "$GOPATH/bin/2goarray" ]; then
     echo "Installing 2goarray..."
     go get github.com/cratonica/2goarray
-    if [ $? -ne 0 ]; then
+    if ! go get github.com/cratonica/2goarray; then
         echo Failure executing go get github.com/cratonica/2goarray
-        exit
+        exit 1
     fi
 fi
 
@@ -31,11 +32,11 @@ OUTPUT=iconunix.go
 echo Generating $OUTPUT
 echo "//+build linux darwin" > $OUTPUT
 echo >> $OUTPUT
-cat "menu_icon.png" | $GOPATH/bin/2goarray Data icon >> $OUTPUT
+"$GOPATH/bin/2goarray" Data icon >> $OUTPUT < "menu_icon.png"
 if [ $? -ne 0 ]; then
     rm menu_icon.png
     echo Failure generating $OUTPUT
-    exit
+    exit 1
 fi
 rm menu_icon.png
 echo Finished

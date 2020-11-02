@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
+set -e
+set -x
 
-rm -rf dist/zoom-status.app
+rm -rf dist/zoom-slack-status.app
 
 pushd icons || exit 1
 bash generate-icons.sh
@@ -9,10 +11,8 @@ popd || exit 1
 
 go build .
 
-mkdir -p dist/zoom-status.app/Contents/
-mkdir -p dist/zoom-status.app/Contents/MacOS
-mkdir -p dist/zoom-status.app/Contents/Resources
+mkdir -p dist/zoom-slack-status.app/Contents/{MacOS,Resources}
 
-cp Info.plist dist/zoom-status.app/Contents/
-cp zoom-status dist/zoom-status.app/Contents/MacOS/
-cp icons/icon.icns dist/zoom-status.app/Contents/Resources/
+cp Info.plist dist/zoom-slack-status.app/Contents/
+cp zoom-slack-status dist/zoom-slack-status.app/Contents/MacOS/
+cp icons/icon.icns dist/zoom-slack-status.app/Contents/Resources/
