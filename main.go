@@ -94,7 +94,7 @@ func onReady() {
 
 	for {
 		wasInMeeting := inMeeting
-		inMeeting := checkForMeeting()
+		inMeeting = checkForMeeting()
 
 		if inMeeting {
 			if !wasInMeeting {
