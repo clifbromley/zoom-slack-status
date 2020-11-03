@@ -2,5 +2,5 @@ zoom-slack-status
 icons/icon.icns
 icons/out.iconset
 dist/
-.slack-status-config.json
+.zoom-slack-status.*
 .DS_Store

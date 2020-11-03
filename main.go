@@ -5,18 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	icon "github.com/caitlinelfring/zoom-slack-status/icons"
+	"github.com/fsnotify/fsnotify"
 
 	"github.com/getlantern/systray"
 	homedir "github.com/mitchellh/go-homedir"
 	ps "github.com/mitchellh/go-ps"
+	"github.com/spf13/viper"
 )
 
 type SlackStatus struct {
@@ -25,10 +25,10 @@ type SlackStatus struct {
 }
 
 type slackAccount struct {
-	Name            string       `json:"name"`
-	Token           string       `json:"token"`
-	MeetingStatus   *SlackStatus `json:"meetingStatus,omitempty"`
-	NoMeetingStatus *SlackStatus `json:"noMeetingStatus,omitempty"`
+	Name            string
+	Token           string
+	MeetingStatus   *SlackStatus
+	NoMeetingStatus *SlackStatus
 }
 
 var (
@@ -42,7 +42,35 @@ var (
 )
 
 func main() {
+	home, err := homedir.Dir()
+	if err != nil {
+		panic(err)
+	}
+
+	viper.AddConfigPath(home)
+	viper.AddConfigPath(".")
+	viper.SetConfigName(".zoom-slack-status")
+	viper.SetDefault("interval", 60*time.Second)
+
+	loadInConfig()
+
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Printf("Config file changed: %s, operation: %s\n", e.Name, e.Op)
+		loadInConfig()
+	})
+
 	systray.Run(onReady, onExit)
+}
+
+func loadInConfig() {
+	if err := viper.ReadInConfig(); err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+
+	if err := viper.UnmarshalKey("accounts", &slackAccounts); err != nil {
+		panic(err)
+	}
 }
 
 func onReady() {
@@ -61,11 +89,6 @@ func onReady() {
 		systray.Quit()
 		os.Exit(0)
 	}()
-
-	err := loadConfig()
-	if err != nil {
-		panic(err)
-	}
 
 	inMeeting := false
 
@@ -93,33 +116,12 @@ func onReady() {
 			menuStatus.SetTitle("Status: Not In Meeting")
 		}
 
-		time.Sleep(60 * time.Second)
+		time.Sleep(viper.GetDuration("interval"))
 	}
 }
 
 func onExit() {
 	setInMeeting(false)
-}
-
-func loadConfig() error {
-	fmt.Println("Loading Config...")
-	home, err := homedir.Dir()
-	if err != nil {
-		return err
-	}
-	jsonFile, err := os.Open(filepath.Join(home, ".slack-status-config.json"))
-	if err != nil {
-		return err
-	}
-
-	defer jsonFile.Close()
-
-	byteValue, err := ioutil.ReadAll(jsonFile)
-	if err != nil {
-		return err
-	}
-
-	return json.Unmarshal(byteValue, &slackAccounts)
 }
 
 func checkForMeeting() bool {
@@ -198,18 +200,6 @@ func setSlackProfile(status SlackStatus, token string) error {
 	fmt.Println("response Status:", resp.Status)
 	_, _ = io.Copy(os.Stdout, resp.Body)
 	return err
-}
-
-// deleteEmpty Removes empty strings from a slice of strings
-func deleteEmpty(s []string) []string {
-	var r []string
-	for _, str := range s {
-		str = strings.TrimSpace(str)
-		if len(str) > 0 {
-			r = append(r, str)
-		}
-	}
-	return r
 }
 
 // sliceContains checks to see if string s is in the slice
