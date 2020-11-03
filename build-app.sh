@@ -16,3 +16,6 @@ mkdir -p dist/zoom-slack-status.app/Contents/{MacOS,Resources}
 cp Info.plist dist/zoom-slack-status.app/Contents/
 cp zoom-slack-status dist/zoom-slack-status.app/Contents/MacOS/
 cp icons/icon.icns dist/zoom-slack-status.app/Contents/Resources/
+
+# copy app into Applications folder
+cp -R dist/zoom-slack-status.app /Applications/
