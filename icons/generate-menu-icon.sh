@@ -1,12 +1,7 @@
 #!/bin/bash -e
 
-export GO111MODULE=off
-if [ -z "$GOPATH" ]; then
-    echo GOPATH environment variable not set
-    exit 1
-fi
-
-if [ ! -e "$GOPATH/bin/2goarray" ]; then
+if [ ! -e "$(go env GOPATH)/bin/2goarray" ]; then
+    export GO111MODULE=off
     echo "Installing 2goarray..."
     go get github.com/cratonica/2goarray
     if ! go get github.com/cratonica/2goarray; then
