@@ -20,7 +20,7 @@ generate() {
     sips -z $SIZE $SIZE $INPUT --out menu_icon.png
     echo Generating $OUTPUT
     echo "//+build linux darwin" > "$OUTPUT"
-    "$GOPATH/bin/2goarray" "$VAR" icons >> "$OUTPUT" < "$INPUT"
+    "$(go env GOPATH)/bin/2goarray" "$VAR" icons >> "$OUTPUT" < "$INPUT"
     # if [ $? -ne 0 ]; then
     #     rm menu_icon.png
     #     echo Failure generating $OUTPUT
