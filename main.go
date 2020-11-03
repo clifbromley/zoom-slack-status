@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	icon "github.com/caitlinelfring/zoom-slack-status/icons"
-	"github.com/fsnotify/fsnotify"
+	"github.com/caitlinelfring/zoom-slack-status/icons"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/getlantern/systray"
 	homedir "github.com/mitchellh/go-homedir"
 	ps "github.com/mitchellh/go-ps"
@@ -75,7 +75,7 @@ func loadInConfig() {
 
 func onReady() {
 	systray.SetTooltip("Zoom Status")
-	systray.SetIcon(icon.Data)
+	systray.SetIcon(icons.Free)
 
 	menuStatus := systray.AddMenuItem("Status: Not In Meeting", "Not In Meeting")
 	menuStatus.Disable()
@@ -145,6 +145,12 @@ func checkForMeeting() bool {
 func setInMeeting(inMeeting bool) {
 	fmt.Printf("Setting status to in meeting: %t\n", inMeeting)
 
+	if inMeeting {
+		systray.SetIcon(icons.Busy)
+	} else {
+		systray.SetIcon(icons.Free)
+	}
+
 	// Set status for all accounts
 	for _, account := range slackAccounts {
 		fmt.Println("Setting slack status for " + account.Name)
@@ -166,7 +172,7 @@ func setInMeeting(inMeeting bool) {
 		}
 
 		if err := setSlackProfile(status, account.Token); err != nil {
-			fmt.Printf("Failed to set slack profile for %s: %s", account.Name, err.Error())
+			fmt.Printf("Failed to set slack profile for %s: %s\n", account.Name, err.Error())
 		}
 	}
 }
@@ -200,14 +206,4 @@ func setSlackProfile(status SlackStatus, token string) error {
 	fmt.Println("response Status:", resp.Status)
 	_, _ = io.Copy(os.Stdout, resp.Body)
 	return err
-}
-
-// sliceContains checks to see if string s is in the slice
-func sliceContains(s string, slice []string) bool {
-	for _, sl := range slice {
-		if strings.Contains(sl, s) {
-			return true
-		}
-	}
-	return false
 }
