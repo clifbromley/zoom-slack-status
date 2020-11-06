@@ -4,3 +4,4 @@ icons/out.iconset
 dist/
 .zoom-slack-status.*
 .DS_Store
+*.tar.gz

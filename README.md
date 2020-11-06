@@ -36,5 +36,6 @@ Run with the go toolchain with `go run main.go`. Or `go build . && ./zoom-slack-
 
 ### Build "Mac App"
 
-1. Build the app with `./build-app.sh`
-2. Launch the app from `/Applications` in your Finder
+1. Build the app with `make build`
+2. Copy `dist/zoom-slack-status.app` to your `/Applications` folder.
+3. Launch the app from `/Applications` in your Finder
