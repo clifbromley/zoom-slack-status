@@ -30,7 +30,16 @@ accounts:
 interval: "60s"
 ```
 
-### Run
+## Download
+
+Download the latest release from <https://github.com/caitlinelfring/zoom-slack-status/releases>.
+
+1. Download the `.tar.gz` file from releases.
+2. Double-click on the downloaded file to extract `zoom-slack-status.app` to your `/Applications` folder.
+3. Copy `zoom-slack-status.app` to your `/Applications` folder.
+4. Launch the app from `/Applications` in your Finder.
+
+### Developing
 
 Run with the go toolchain with `go run main.go`. Or `go build . && ./zoom-slack-status`.
 
