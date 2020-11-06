@@ -4,7 +4,11 @@ Sets status of slack workspaces based on whether or not a zoom call is open.
 
 ## Configuration & Installation
 
-First, get a user token from slack [here](https://api.slack.com/custom-integrations/legacy-tokens)
+* Create a [Slack App](https://api.slack.com/apps)
+* Configure User Token Scopes:
+  * `users.profile.write`
+
+You will need the access token from the "OAuth & Permissions" section of your Slack App.
 
 ### Configuration
 
