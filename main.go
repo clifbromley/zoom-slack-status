@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -20,25 +19,41 @@ import (
 )
 
 type SlackStatus struct {
-	StatusText  string `json:"status_text"`
-	StatusEmoji string `json:"status_emoji"`
+	StatusText  string `mapstructure:"status_text" json:"status_text"`
+	StatusEmoji string `mapstructure:"status_emoji" json:"status_emoji"`
 }
 
-type slackAccount struct {
-	Name            string
-	Token           string
-	MeetingStatus   *SlackStatus
-	NoMeetingStatus *SlackStatus
+type Account struct {
+	Name            string      `mapstructure:"name"`
+	Token           string      `mapstructure:"token"`
+	MeetingStatus   SlackStatus `mapstructure:"meetingStatus"`
+	NoMeetingStatus SlackStatus `mapstructure:"noMeetingStatus"`
+}
+
+type Config struct {
+	Accounts []Account     `mapstructure:"accounts"`
+	Interval time.Duration `mapstructure:"interval"`
+}
+
+type SlackResponse struct {
+	Ok      bool   `json:"ok"`
+	Error   string `json:"error"`
+	Warning string `json:"warning"`
+	// Other fields ignored:
+	// 		response_metadata
+	//		profile
 }
 
 var (
-	slackAccounts []slackAccount
-
-	defaultNoMeetingStatus = SlackStatus{}
-	defaultMeetingStatus   = SlackStatus{
+	defaultMeetingStatus = SlackStatus{
 		StatusText:  "In a meeting",
 		StatusEmoji: ":zoom:",
 	}
+	defaultNoMeetingStatus               = SlackStatus{}
+	defaultInterval        time.Duration = 60 * time.Second
+
+	config        = Config{}
+	configChanged = false
 )
 
 func main() {
@@ -50,7 +65,8 @@ func main() {
 	viper.AddConfigPath(home)
 	viper.AddConfigPath(".")
 	viper.SetConfigName(".zoom-slack-status")
-	viper.SetDefault("interval", 60*time.Second)
+
+	viper.SetDefault("Interval", defaultInterval)
 
 	loadInConfig()
 
@@ -64,13 +80,29 @@ func main() {
 }
 
 func loadInConfig() {
+	config = Config{}
+
 	if err := viper.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+		panic(fmt.Errorf("fatal error config file: %s", err))
 	}
 
-	if err := viper.UnmarshalKey("accounts", &slackAccounts); err != nil {
+	if err := viper.Unmarshal(&config); err != nil {
 		panic(err)
 	}
+
+	// Set default status values if not configured.
+	for i := range config.Accounts {
+		if config.Accounts[i].MeetingStatus == (SlackStatus{}) {
+			config.Accounts[i].MeetingStatus = defaultMeetingStatus
+		}
+		if config.Accounts[i].NoMeetingStatus == (SlackStatus{}) {
+			config.Accounts[i].NoMeetingStatus = defaultNoMeetingStatus
+		}
+	}
+
+	fmt.Printf("Configuration loaded:\n%+v\n\n", config)
+
+	configChanged = true
 }
 
 func onReady() {
@@ -97,13 +129,13 @@ func onReady() {
 		inMeeting = checkForMeeting()
 
 		if inMeeting {
-			if !wasInMeeting {
+			if !wasInMeeting || configChanged {
 				setInMeeting(true)
 			} else {
 				fmt.Println("Status already set to in meeting")
 			}
 		} else {
-			if wasInMeeting {
+			if wasInMeeting || configChanged {
 				setInMeeting(false)
 			} else {
 				fmt.Println("Status already set to not in meeting")
@@ -116,7 +148,9 @@ func onReady() {
 			menuStatus.SetTitle("Status: Not In Meeting")
 		}
 
-		time.Sleep(viper.GetDuration("interval"))
+		configChanged = false
+
+		time.Sleep(config.Interval)
 	}
 }
 
@@ -152,23 +186,15 @@ func setInMeeting(inMeeting bool) {
 	}
 
 	// Set status for all accounts
-	for _, account := range slackAccounts {
+	for _, account := range config.Accounts {
 		fmt.Println("Setting slack status for " + account.Name)
 
 		var status SlackStatus
 
 		if inMeeting {
-			if account.MeetingStatus != nil {
-				status = *account.MeetingStatus
-			} else {
-				status = defaultMeetingStatus
-			}
+			status = account.MeetingStatus
 		} else {
-			if account.NoMeetingStatus != nil {
-				status = *account.NoMeetingStatus
-			} else {
-				status = defaultNoMeetingStatus
-			}
+			status = account.NoMeetingStatus
 		}
 
 		if err := setSlackProfile(status, account.Token); err != nil {
@@ -193,7 +219,7 @@ func setSlackProfile(status SlackStatus, token string) error {
 	}
 
 	// Add proper headers
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-Type", "application/json; charset=utf-8")
 	req.Header.Add("Authorization", "Bearer "+token)
 
 	resp, err := http.DefaultClient.Do(req)
@@ -202,8 +228,21 @@ func setSlackProfile(status SlackStatus, token string) error {
 	}
 	defer resp.Body.Close()
 
-	// TODO: human-friendly output
-	fmt.Println("response Status:", resp.Status)
-	_, _ = io.Copy(os.Stdout, resp.Body)
+	fmt.Println("Response Status:", resp.Status)
+
+	r := SlackResponse{}
+	err = json.NewDecoder(resp.Body).Decode(&r)
+	if err != nil {
+		return err
+	}
+
+	if len(r.Warning) > 0 {
+		fmt.Println("Warning: ", r.Warning)
+	}
+
+	if !r.Ok {
+		err = fmt.Errorf(r.Error)
+	}
+
 	return err
 }
