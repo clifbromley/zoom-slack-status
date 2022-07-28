@@ -24,10 +24,10 @@ type SlackStatus struct {
 }
 
 type Account struct {
-	Name            string      `mapstructure:"name"`
-	Token           string      `mapstructure:"token"`
-	MeetingStatus   SlackStatus `mapstructure:"meetingStatus"`
-	NoMeetingStatus SlackStatus `mapstructure:"noMeetingStatus"`
+	Name            string       `mapstructure:"name"`
+	Token           string       `mapstructure:"token"`
+	MeetingStatus   *SlackStatus `mapstructure:"meetingStatus"`
+	NoMeetingStatus *SlackStatus `mapstructure:"noMeetingStatus"`
 }
 
 type Config struct {
@@ -56,6 +56,16 @@ var (
 	configChanged = false
 )
 
+// Receiver functions for outputting Config and Account structures as strings.
+// Custom handling is necessary to output the contents of structs embedded via pointers.
+func (c Config) String() string {
+	return fmt.Sprintf("{Accounts:%v Interval:%v}", c.Accounts, c.Interval)
+}
+
+func (a Account) String() string {
+	return fmt.Sprintf("{Name:%v Token:%v MeetingStatus:%+v NoMeetingStatus:%+v}", a.Name, a.Token, a.MeetingStatus, a.NoMeetingStatus)
+}
+
 func main() {
 	home, err := homedir.Dir()
 	if err != nil {
@@ -66,7 +76,7 @@ func main() {
 	viper.AddConfigPath(".")
 	viper.SetConfigName(".zoom-slack-status")
 
-	viper.SetDefault("Interval", defaultInterval)
+	viper.SetDefault("interval", defaultInterval)
 
 	loadInConfig()
 
@@ -80,29 +90,30 @@ func main() {
 }
 
 func loadInConfig() {
-	config = Config{}
-
 	if err := viper.ReadInConfig(); err != nil {
 		panic(fmt.Errorf("fatal error config file: %s", err))
 	}
 
-	if err := viper.Unmarshal(&config); err != nil {
+	cfg := Config{}
+	if err := viper.Unmarshal(&cfg); err != nil {
 		panic(err)
 	}
 
 	// Set default status values if not configured.
-	for i := range config.Accounts {
-		if config.Accounts[i].MeetingStatus == (SlackStatus{}) {
-			config.Accounts[i].MeetingStatus = defaultMeetingStatus
+	for i := range cfg.Accounts {
+		if cfg.Accounts[i].MeetingStatus == nil {
+			cfg.Accounts[i].MeetingStatus = &defaultMeetingStatus
 		}
-		if config.Accounts[i].NoMeetingStatus == (SlackStatus{}) {
-			config.Accounts[i].NoMeetingStatus = defaultNoMeetingStatus
+		if cfg.Accounts[i].NoMeetingStatus == nil {
+			cfg.Accounts[i].NoMeetingStatus = &defaultNoMeetingStatus
 		}
 	}
 
-	fmt.Printf("Configuration loaded:\n%+v\n\n", config)
-
+	// Update global configuration.
+	config = cfg
 	configChanged = true
+
+	fmt.Printf("Configuration loaded:\n%v\n\n", config)
 }
 
 func onReady() {
@@ -189,7 +200,7 @@ func setInMeeting(inMeeting bool) {
 	for _, account := range config.Accounts {
 		fmt.Println("Setting slack status for " + account.Name)
 
-		var status SlackStatus
+		var status *SlackStatus
 
 		if inMeeting {
 			status = account.MeetingStatus
@@ -197,7 +208,7 @@ func setInMeeting(inMeeting bool) {
 			status = account.NoMeetingStatus
 		}
 
-		if err := setSlackProfile(status, account.Token); err != nil {
+		if err := setSlackProfile(*status, account.Token); err != nil {
 			fmt.Printf("Failed to set slack profile for %s: %s\n", account.Name, err.Error())
 		}
 	}
