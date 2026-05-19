@@ -1,0 +1,12 @@
+accounts:
+  - name: "YOUR-ACCOUNT-NAME"
+    token: "YOUR-TOKEN-HERE"
+    # Optional
+    # meetingStatus:
+    #   status_text: "In a meeting"
+    #   status_emoji: ":zoom:"
+    # noMeetingStatus:
+    #   status_text: "I'm available"
+    #   status_emoji: ":facepalm:"
+# interval for how often to check if a Zoom meeting is in progress (default: 60s)
+interval: "20s"
